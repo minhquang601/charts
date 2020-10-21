@@ -20,12 +20,15 @@ import 'dart:math';
 // EXCLUDE_FROM_GALLERY_DOCS_END
 import 'package:flutter/material.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:charts_common/common.dart' as common
+    show ChartBehavior, SelectNearest, SelectionModelType, SelectionTrigger;
 
 class OrdinalComboBarLineChart extends StatelessWidget {
   final List<charts.Series> seriesList;
   final bool animate;
+  final charts.CallbackTapChart callbackTapChart;
 
-  OrdinalComboBarLineChart(this.seriesList, {this.animate});
+  OrdinalComboBarLineChart(this.seriesList, {this.animate, this.callbackTapChart});
 
   factory OrdinalComboBarLineChart.withSampleData() {
     return new OrdinalComboBarLineChart(
@@ -44,49 +47,36 @@ class OrdinalComboBarLineChart extends StatelessWidget {
   }
 
   /// Create random data.
-  static List<charts.Series<OrdinalSales, String>> _createRandomData() {
+  static List<charts.Series<OrdinalSales1, String>> _createRandomData() {
     final random = new Random();
 
     final desktopSalesData = [
-      new OrdinalSales('2014', random.nextInt(100)),
-      new OrdinalSales('2015', random.nextInt(100)),
-      new OrdinalSales('2016', random.nextInt(100)),
-      new OrdinalSales('2017', random.nextInt(100)),
+      new OrdinalSales1('2014', random.nextInt(100)),
+      new OrdinalSales1('2015', random.nextInt(100)),
+      new OrdinalSales1('2016', random.nextInt(100)),
+      new OrdinalSales1('2017', random.nextInt(100)),
     ];
-
-    final tableSalesData = [
-      new OrdinalSales('2014', random.nextInt(100)),
-      new OrdinalSales('2015', random.nextInt(100)),
-      new OrdinalSales('2016', random.nextInt(100)),
-      new OrdinalSales('2017', random.nextInt(100)),
-    ];
-
     final mobileSalesData = [
-      new OrdinalSales('2014', random.nextInt(100)),
-      new OrdinalSales('2015', random.nextInt(100)),
-      new OrdinalSales('2016', random.nextInt(100)),
-      new OrdinalSales('2017', random.nextInt(100)),
+      new OrdinalSales1('2014', random.nextInt(100)),
+      new OrdinalSales1('2015', random.nextInt(100)),
+      new OrdinalSales1('2016', random.nextInt(100)),
+      new OrdinalSales1('2017', random.nextInt(100)),
     ];
 
     return [
-      new charts.Series<OrdinalSales, String>(
+      new charts.Series<OrdinalSales1, String>(
           id: 'Desktop',
           colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
+          domainFn: (OrdinalSales1 sales, _) => sales.year,
+          measureFn: (OrdinalSales1 sales, _) => sales.sales,
           data: desktopSalesData),
-      new charts.Series<OrdinalSales, String>(
-          id: 'Tablet',
-          colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
-          data: tableSalesData),
-      new charts.Series<OrdinalSales, String>(
-          id: 'Mobile',
-          colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
-          data: mobileSalesData)
+      new charts.Series<OrdinalSales1, String>(
+        id: 'Mobile',
+        colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
+        domainFn: (OrdinalSales1 sales, _) => sales.year,
+        measureFn: (OrdinalSales1 sales, _) => sales.sales,
+        data: mobileSalesData,
+      )
         // Configure our custom line renderer for this series.
         ..setAttribute(charts.rendererIdKey, 'customLine'),
     ];
@@ -105,51 +95,59 @@ class OrdinalComboBarLineChart extends StatelessWidget {
         customSeriesRenderers: [
           new charts.LineRendererConfig(
               // ID used to link series to this renderer.
-              customRendererId: 'customLine')
+              customRendererId: 'customLine',
+              includePoints: true)
+        ],
+        behaviors: [
+          // Optional - Configures a [LinePointHighlighter] behavior with a
+          // vertical follow line. A vertical follow line is included by
+          // default, but is shown here as an example configuration.
+          //
+          // By default, the line has default dash pattern of [1,3]. This can be
+          // set by providing a [dashPattern] or it can be turned off by passing in
+          // an empty list. An empty list is necessary because passing in a null
+          // value will be treated the same as not passing in a value at all.
+          new charts.LinePointHighlighter(
+            // callbackTapChart: callbackTapChart,
+            callbackTapChart: (index,datas) {
+              print((datas[0].point.datum as OrdinalSales1).sales);
+              print((datas[0].point.datum as OrdinalSales1).year);
+            },
+          ),
+          charts.SelectNearest(
+            eventTrigger: charts.SelectionTrigger.tap,
+          ),
         ]);
   }
 
   /// Create series list with multiple series
-  static List<charts.Series<OrdinalSales, String>> _createSampleData() {
+  static List<charts.Series<OrdinalSales1, String>> _createSampleData() {
     final desktopSalesData = [
-      new OrdinalSales('2014', 5),
-      new OrdinalSales('2015', 25),
-      new OrdinalSales('2016', 100),
-      new OrdinalSales('2017', 75),
-    ];
-
-    final tableSalesData = [
-      new OrdinalSales('2014', 5),
-      new OrdinalSales('2015', 25),
-      new OrdinalSales('2016', 100),
-      new OrdinalSales('2017', 75),
+      new OrdinalSales1('2014', 5),
+      new OrdinalSales1('2015', 25),
+      new OrdinalSales1('2016', 100),
+      new OrdinalSales1('2017', 75),
     ];
 
     final mobileSalesData = [
-      new OrdinalSales('2014', 10),
-      new OrdinalSales('2015', 50),
-      new OrdinalSales('2016', 200),
-      new OrdinalSales('2017', 150),
+      new OrdinalSales1('2014', 10),
+      new OrdinalSales1('2015', 50),
+      new OrdinalSales1('2016', 200),
+      new OrdinalSales1('2017', 150),
     ];
 
     return [
-      new charts.Series<OrdinalSales, String>(
+      new charts.Series<OrdinalSales1, String>(
           id: 'Desktop',
           colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
+          domainFn: (OrdinalSales1 sales, _) => sales.year,
+          measureFn: (OrdinalSales1 sales, _) => sales.sales,
           data: desktopSalesData),
-      new charts.Series<OrdinalSales, String>(
-          id: 'Tablet',
-          colorFn: (_, __) => charts.MaterialPalette.red.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
-          data: tableSalesData),
-      new charts.Series<OrdinalSales, String>(
+      new charts.Series<OrdinalSales1, String>(
           id: 'Mobile ',
           colorFn: (_, __) => charts.MaterialPalette.green.shadeDefault,
-          domainFn: (OrdinalSales sales, _) => sales.year,
-          measureFn: (OrdinalSales sales, _) => sales.sales,
+          domainFn: (OrdinalSales1 sales, _) => sales.year,
+          measureFn: (OrdinalSales1 sales, _) => sales.sales,
           data: mobileSalesData)
         // Configure our custom line renderer for this series.
         ..setAttribute(charts.rendererIdKey, 'customLine'),
@@ -158,9 +156,9 @@ class OrdinalComboBarLineChart extends StatelessWidget {
 }
 
 /// Sample ordinal data type.
-class OrdinalSales {
+class OrdinalSales1 {
   final String year;
   final int sales;
 
-  OrdinalSales(this.year, this.sales);
+  OrdinalSales1(this.year, this.sales);
 }

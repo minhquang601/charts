@@ -31,6 +31,7 @@ import 'behaviors/chart_behavior.dart' show ChartBehavior;
 import 'base_chart.dart' show BaseChart, LayoutConfig;
 import 'selection_model_config.dart' show SelectionModelConfig;
 import 'user_managed_state.dart' show UserManagedState;
+import 'package:flutter/material.dart';
 
 @immutable
 abstract class CartesianChart<D> extends BaseChart<D> {
@@ -43,6 +44,7 @@ abstract class CartesianChart<D> extends BaseChart<D> {
   CartesianChart(
     List<common.Series<dynamic, D>> seriesList, {
     bool animate,
+    Key key,
     Duration animationDuration,
     this.domainAxis,
     this.primaryMeasureAxis,
@@ -59,6 +61,7 @@ abstract class CartesianChart<D> extends BaseChart<D> {
     this.flipVerticalAxis,
   }) : super(
           seriesList,
+          key: key,
           animate: animate,
           animationDuration: animationDuration,
           defaultRenderer: defaultRenderer,

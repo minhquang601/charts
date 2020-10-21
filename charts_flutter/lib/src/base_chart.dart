@@ -32,6 +32,7 @@ import 'selection_model_config.dart' show SelectionModelConfig;
 import 'package:flutter/material.dart' show StatefulWidget;
 import 'base_chart_state.dart' show BaseChartState;
 import 'user_managed_state.dart' show UserManagedState;
+import 'package:flutter/material.dart';
 
 @immutable
 abstract class BaseChart<D> extends StatefulWidget {
@@ -73,6 +74,7 @@ abstract class BaseChart<D> extends StatefulWidget {
       {bool animate,
       Duration animationDuration,
       this.defaultRenderer,
+      Key key,
       this.customSeriesRenderers,
       this.behaviors,
       this.selectionModels,
@@ -82,7 +84,8 @@ abstract class BaseChart<D> extends StatefulWidget {
       this.userManagedState})
       : this.animate = animate ?? true,
         this.animationDuration =
-            animationDuration ?? const Duration(milliseconds: 300);
+            animationDuration ?? const Duration(milliseconds: 300),
+        super(key: key);
 
   @override
   BaseChartState<D> createState() => new BaseChartState<D>();

@@ -424,7 +424,7 @@ abstract class CartesianChart<D> extends BaseChart<D> {
   @override
   void onPostLayout(Map<String, List<MutableSeries<D>>> rendererToSeriesList) {
     fireOnAxisConfigured();
-
+    
     super.onPostLayout(rendererToSeriesList);
   }
 

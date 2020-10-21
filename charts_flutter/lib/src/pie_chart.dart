@@ -22,6 +22,7 @@ import 'selection_model_config.dart' show SelectionModelConfig;
 
 class PieChart<D> extends BaseChart<D> {
   PieChart(
+    
     List<common.Series> seriesList, {
     bool animate,
     Duration animationDuration,

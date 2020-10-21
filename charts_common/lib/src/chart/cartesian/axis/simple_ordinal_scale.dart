@@ -130,6 +130,7 @@ class SimpleOrdinalScale implements OrdinalScale {
 
   @override
   String reverse(double pixelLocation) {
+    if(_cachedRangeBandShift == null || _cachedStepSizePixels == null) return '';
     final index = ((pixelLocation -
             viewportTranslatePx -
             _range.start -

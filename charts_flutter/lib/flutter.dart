@@ -159,7 +159,10 @@ export 'package:charts_common/common.dart'
         TypedAccessorFn,
         UTCDateTimeFactory,
         ViewMargin,
+        CallbackTapChart,
+        DatumPoint,
         VocalizationCallback;
+        
 
 export 'src/bar_chart.dart';
 export 'src/base_chart.dart' show BaseChart, LayoutConfig;

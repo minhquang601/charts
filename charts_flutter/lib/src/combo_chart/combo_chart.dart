@@ -26,7 +26,7 @@ import '../base_chart.dart' show LayoutConfig;
 import '../base_chart_state.dart' show BaseChartState;
 import '../cartesian_chart.dart' show CartesianChart;
 import '../selection_model_config.dart' show SelectionModelConfig;
-
+import 'package:flutter/material.dart';
 /// A numeric combo chart supports rendering each series of data with different
 /// series renderers.
 ///
@@ -81,6 +81,7 @@ class NumericComboChart extends CartesianChart<num> {
 class OrdinalComboChart extends CartesianChart<String> {
   OrdinalComboChart(
     List<common.Series> seriesList, {
+    Key key,
     bool animate,
     Duration animationDuration,
     common.AxisSpec domainAxis,
@@ -95,6 +96,7 @@ class OrdinalComboChart extends CartesianChart<String> {
     bool defaultInteractions = true,
   }) : super(
           seriesList,
+          key: key,
           animate: animate,
           animationDuration: animationDuration,
           domainAxis: domainAxis,
@@ -114,6 +116,7 @@ class OrdinalComboChart extends CartesianChart<String> {
     // Optionally create primary and secondary measure axes if the chart was
     // configured with them. If no axes were configured, then the chart will
     // use its default types (usually a numeric axis).
+    
     return new common.OrdinalCartesianChart(
         layoutConfig: layoutConfig?.commonLayoutConfig,
         primaryMeasureAxis: primaryMeasureAxis?.createAxis(),

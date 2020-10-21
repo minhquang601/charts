@@ -118,7 +118,7 @@ class InitialHintAnimation extends StatelessWidget {
       // Set the initial viewport by providing a new AxisSpec with the
       // desired viewport: a starting domain and the data size.
       domainAxis: new charts.OrdinalAxisSpec(
-          viewport: new charts.OrdinalViewport('2018', 4)),
+          viewport: new charts.OrdinalViewport('2020', 4)),
       behaviors: [
         // Add this behavior to show initial hint animation that will pan to the
         // final desired viewport.

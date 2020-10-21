@@ -16,6 +16,9 @@
 import 'dart:collection' show LinkedHashMap;
 import 'dart:math' show max, min, Point, Rectangle;
 
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
 import 'package:meta/meta.dart';
 
 import '../../../common/color.dart' show Color;
@@ -40,6 +43,12 @@ import '../processed_series.dart' show ImmutableSeries;
 import '../selection_model/selection_model.dart'
     show SelectionModel, SelectionModelType;
 import 'chart_behavior.dart' show ChartBehavior;
+
+typedef CallbackTapChart<D> = Function(
+  int,
+  List<_PointRendererElement<D>>,
+);
+bool _isTapChart = false;
 
 /// Chart behavior that monitors the specified [SelectionModel] and renders a
 /// dot for selected data.
@@ -115,6 +124,8 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
   // data.
   final _currentKeys = <String>[];
 
+  final CallbackTapChart callbackTapChart;
+
   LinePointHighlighter(
       {SelectionModelType selectionModelType,
       double defaultRadiusPx,
@@ -123,6 +134,7 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
       LinePointHighlighterFollowLineType showVerticalFollowLine,
       List<int> dashPattern,
       bool drawFollowLinesAcrossChart,
+      this.callbackTapChart,
       SymbolRenderer symbolRenderer})
       : selectionModelType = selectionModelType ?? SelectionModelType.info,
         defaultRadiusPx = defaultRadiusPx ?? 4.0,
@@ -143,13 +155,15 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
     _chart = chart;
 
     _view = _LinePointLayoutView<D>(
-        chart: chart,
-        layoutPaintOrder: LayoutViewPaintOrder.linePointHighlighter,
-        showHorizontalFollowLine: showHorizontalFollowLine,
-        showVerticalFollowLine: showVerticalFollowLine,
-        dashPattern: dashPattern,
-        drawFollowLinesAcrossChart: drawFollowLinesAcrossChart,
-        symbolRenderer: symbolRenderer);
+      chart: chart,
+      layoutPaintOrder: LayoutViewPaintOrder.linePointHighlighter,
+      showHorizontalFollowLine: showHorizontalFollowLine,
+      showVerticalFollowLine: showVerticalFollowLine,
+      dashPattern: dashPattern,
+      drawFollowLinesAcrossChart: drawFollowLinesAcrossChart,
+      symbolRenderer: symbolRenderer,
+      callbackTapChart: callbackTapChart,
+    );
 
     if (chart is CartesianChart) {
       // Only vertical rendering is supported by this behavior.
@@ -174,6 +188,8 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
   }
 
   void _selectionChanged(SelectionModel selectionModel) {
+    _isTapChart = true;
+
     _chart.redraw(skipLayout: true, skipAnimation: true);
   }
 
@@ -213,7 +229,7 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
         animatingPoint = _seriesPointMap[pointKey];
       } else {
         // Create a new point and have it animate in from axis.
-        final point = _DatumPoint<D>(
+        final point = DatumPoint<D>(
             datum: datum,
             domain: detail.domain,
             series: series,
@@ -235,7 +251,7 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
       newSeriesMap[pointKey] = animatingPoint;
 
       // Create a new line using the final point locations.
-      final point = _DatumPoint<D>(
+      final point = DatumPoint<D>(
           datum: datum,
           domain: detail.domain,
           series: series,
@@ -277,6 +293,8 @@ class LinePointHighlighter<D> implements ChartBehavior<D> {
 class _LinePointLayoutView<D> extends LayoutView {
   final LayoutViewConfig layoutConfig;
 
+  final CallbackTapChart callbackTapChart;
+
   final LinePointHighlighterFollowLineType showHorizontalFollowLine;
 
   final LinePointHighlighterFollowLineType showVerticalFollowLine;
@@ -307,6 +325,7 @@ class _LinePointLayoutView<D> extends LayoutView {
     @required this.showHorizontalFollowLine,
     @required this.showVerticalFollowLine,
     @required this.symbolRenderer,
+    this.callbackTapChart,
     this.dashPattern,
     this.drawFollowLinesAcrossChart,
   }) : layoutConfig = LayoutViewConfig(
@@ -360,158 +379,23 @@ class _LinePointLayoutView<D> extends LayoutView {
       points.add(point.getCurrentPoint(animationPercent));
     });
 
-    // Build maps of the position where the follow lines should stop for each
-    // selected data point.
-    final endPointPerValueVertical = <int, int>{};
-    final endPointPerValueHorizontal = <int, int>{};
-
-    for (_PointRendererElement<D> pointElement in points) {
-      if (pointElement.point.x == null || pointElement.point.y == null) {
-        continue;
+    //handle tap
+    if (_isTapChart) {
+      if(points.length == 1) {
+         callbackTapChart?.call(0, points);
+         _isTapChart = false;
+         return;
       }
-
-      final roundedX = pointElement.point.x.round();
-      final roundedY = pointElement.point.y.round();
-
-      // Get the Y value closest to the top of the chart for this X position.
-      if (endPointPerValueVertical[roundedX] == null) {
-        endPointPerValueVertical[roundedX] = roundedY;
-      } else {
-        // In the nearest case, we rely on the selected data always starting
-        // with the nearest point. In this case, we don't care about the rest of
-        // the selected data positions.
-        if (showVerticalFollowLine !=
-            LinePointHighlighterFollowLineType.nearest) {
-          endPointPerValueVertical[roundedX] =
-              min(endPointPerValueVertical[roundedX], roundedY);
-        }
-      }
-
-      // Get the X value closest to the "end" side of the chart for this Y
-      // position.
-      if (endPointPerValueHorizontal[roundedY] == null) {
-        endPointPerValueHorizontal[roundedY] = roundedX;
-      } else {
-        // In the nearest case, we rely on the selected data always starting
-        // with the nearest point. In this case, we don't care about the rest of
-        // the selected data positions.
-        if (showHorizontalFollowLine !=
-            LinePointHighlighterFollowLineType.nearest) {
-          endPointPerValueHorizontal[roundedY] =
-              max(endPointPerValueHorizontal[roundedY], roundedX);
-        }
-      }
-    }
-
-    var shouldShowHorizontalFollowLine = showHorizontalFollowLine ==
-            LinePointHighlighterFollowLineType.all ||
-        showHorizontalFollowLine == LinePointHighlighterFollowLineType.nearest;
-
-    var shouldShowVerticalFollowLine = showVerticalFollowLine ==
-            LinePointHighlighterFollowLineType.all ||
-        showVerticalFollowLine == LinePointHighlighterFollowLineType.nearest;
-
-    // Keep track of points for which we've already drawn lines.
-    final paintedHorizontalLinePositions = <num>[];
-    final paintedVerticalLinePositions = <num>[];
-
-    final drawBounds = chart.drawableLayoutAreaBounds;
-
-    final rtl = chart.context.isRtl;
-
-    // Draw the follow lines first, below all of the highlight shapes.
-    for (_PointRendererElement<D> pointElement in points) {
-      if (pointElement.point.x == null || pointElement.point.y == null) {
-        continue;
-      }
-
-      final roundedX = pointElement.point.x.round();
-      final roundedY = pointElement.point.y.round();
-
-      // Draw the horizontal follow line.
-      if (shouldShowHorizontalFollowLine &&
-          !paintedHorizontalLinePositions.contains(roundedY)) {
-        int leftBound;
-        int rightBound;
-
-        if (drawFollowLinesAcrossChart) {
-          // RTL and LTR both go across the whole draw area.
-          leftBound = drawBounds.left;
-          rightBound = drawBounds.left + drawBounds.width;
-        } else {
-          final x = endPointPerValueHorizontal[roundedY];
-
-          // RTL goes from the point to the right edge. LTR goes from the left
-          // edge to the point.
-          leftBound = rtl ? x : drawBounds.left;
-          rightBound = rtl ? drawBounds.left + drawBounds.width : x;
+      for (int i = 1; i < points.length; ++i) {
+        if (points[i].point.x == null || points[i].point.y == null) {
+          continue;
         }
 
-        canvas.drawLine(
-            points: [
-              Point<num>(leftBound, pointElement.point.y),
-              Point<num>(rightBound, pointElement.point.y),
-            ],
-            stroke: StyleFactory.style.linePointHighlighterColor,
-            strokeWidthPx: 1.0,
-            dashPattern: dashPattern);
-
-        if (showHorizontalFollowLine ==
-            LinePointHighlighterFollowLineType.nearest) {
-          shouldShowHorizontalFollowLine = false;
-        }
-
-        paintedHorizontalLinePositions.add(roundedY);
+        int index = (points[i].point.y < points[i - 1].point.y) ? i : i - 1;
+        callbackTapChart?.call(index, points);
       }
 
-      // Draw the vertical follow line.
-      if (shouldShowVerticalFollowLine &&
-          !paintedVerticalLinePositions.contains(roundedX)) {
-        final topBound = drawFollowLinesAcrossChart
-            ? drawBounds.top
-            : endPointPerValueVertical[roundedX];
-
-        canvas.drawLine(
-            points: [
-              Point<num>(pointElement.point.x, topBound),
-              Point<num>(
-                  pointElement.point.x, drawBounds.top + drawBounds.height),
-            ],
-            stroke: StyleFactory.style.linePointHighlighterColor,
-            strokeWidthPx: 1.0,
-            dashPattern: dashPattern);
-
-        if (showVerticalFollowLine ==
-            LinePointHighlighterFollowLineType.nearest) {
-          shouldShowVerticalFollowLine = false;
-        }
-
-        paintedVerticalLinePositions.add(roundedX);
-      }
-
-      if (!shouldShowHorizontalFollowLine && !shouldShowVerticalFollowLine) {
-        break;
-      }
-    }
-
-    // Draw the highlight shapes on top of all follow lines.
-    for (_PointRendererElement<D> pointElement in points) {
-      if (pointElement.point.x == null || pointElement.point.y == null) {
-        continue;
-      }
-
-      final bounds = Rectangle<double>(
-          pointElement.point.x - pointElement.radiusPx,
-          pointElement.point.y - pointElement.radiusPx,
-          pointElement.radiusPx * 2,
-          pointElement.radiusPx * 2);
-
-      // Draw the highlight dot. Use the [SymbolRenderer] from the datum if one
-      // is defined.
-      (pointElement.symbolRenderer ?? symbolRenderer).paint(canvas, bounds,
-          fillColor: pointElement.fillColor,
-          strokeColor: pointElement.color,
-          strokeWidthPx: pointElement.strokeWidthPx);
+      _isTapChart = false;
     }
   }
 
@@ -522,16 +406,16 @@ class _LinePointLayoutView<D> extends LayoutView {
   bool get isSeriesRenderer => false;
 }
 
-class _DatumPoint<D> extends Point<double> {
+class DatumPoint<D> extends Point<double> {
   final dynamic datum;
   final D domain;
   final ImmutableSeries<D> series;
 
-  _DatumPoint({this.datum, this.domain, this.series, double x, double y})
+  DatumPoint({this.datum, this.domain, this.series, double x, double y})
       : super(x, y);
 
-  factory _DatumPoint.from(_DatumPoint<D> other, [double x, double y]) {
-    return _DatumPoint<D>(
+  factory DatumPoint.from(DatumPoint<D> other, [double x, double y]) {
+    return DatumPoint<D>(
         datum: other.datum,
         domain: other.domain,
         series: other.series,
@@ -541,7 +425,7 @@ class _DatumPoint<D> extends Point<double> {
 }
 
 class _PointRendererElement<D> {
-  _DatumPoint<D> point;
+  DatumPoint<D> point;
   Color color;
   Color fillColor;
   double radiusPx;
@@ -569,7 +453,7 @@ class _PointRendererElement<D> {
 
     final y = _lerpDouble(previousPoint.y, targetPoint.y, animationPercent);
 
-    point = _DatumPoint<D>.from(targetPoint, x, y);
+    point = DatumPoint<D>.from(targetPoint, x, y);
 
     color = getAnimatedColor(previous.color, target.color, animationPercent);
 
@@ -625,7 +509,7 @@ class _AnimatedPoint<D> {
     // Set the target measure value to the axis position for all points.
     final targetPoint = newTarget.point;
 
-    final newPoint = _DatumPoint<D>.from(targetPoint, targetPoint.x,
+    final newPoint = DatumPoint<D>.from(targetPoint, targetPoint.x,
         newTarget.measureAxisPosition.roundToDouble());
 
     newTarget.point = newPoint;

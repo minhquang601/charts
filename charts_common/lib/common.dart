@@ -138,7 +138,7 @@ export 'src/chart/common/behavior/legend/legend_entry_generator.dart'
     show LegendEntryGenerator, LegendDefaultMeasure;
 export 'src/chart/common/behavior/legend/series_legend.dart' show SeriesLegend;
 export 'src/chart/common/behavior/line_point_highlighter.dart'
-    show LinePointHighlighter, LinePointHighlighterFollowLineType;
+    show LinePointHighlighter, LinePointHighlighterFollowLineType, CallbackTapChart, DatumPoint;
 export 'src/chart/common/behavior/range_annotation.dart'
     show
         AnnotationLabelAnchor,

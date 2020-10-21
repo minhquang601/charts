@@ -88,7 +88,7 @@ class WidgetLayoutDelegate extends MultiChildLayoutDelegate {
       // exactly once.
       final behaviorOffset = _getBehaviorOffset(idAndBehavior[behaviorID],
           behaviorSize: behaviorSize, chartSize: chartSize, isRTL: isRTL);
-
+      print("${behaviorOffset.dx} , dy ${behaviorOffset.dy}");
       positionChild(behaviorID, behaviorOffset);
     }
   }

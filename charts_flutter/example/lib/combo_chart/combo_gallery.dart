@@ -27,7 +27,7 @@ List<GalleryScaffold> buildGallery() {
       listTileIcon: new Icon(Icons.insert_chart),
       title: 'Ordinal Combo Chart',
       subtitle: 'Ordinal combo chart with bars and lines',
-      childBuilder: () => new OrdinalComboBarLineChart.withRandomData(),
+      childBuilder: () => OrdinalComboBarLineChart.withRandomData(),
     ),
     new GalleryScaffold(
       listTileIcon: new Icon(Icons.show_chart),
